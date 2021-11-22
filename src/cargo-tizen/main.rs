@@ -29,6 +29,13 @@ fn main() {
                 .arg(&forward_args),
         )
         .subcommand(
+            SubCommand::with_name("check")
+                .about("Wrapper arround cargo check")
+                .args(&tizen_env_args)
+                .arg(&release_arg)
+                .arg(&forward_args),
+        )
+        .subcommand(
             SubCommand::with_name("package")
                 .about("Wrapper arround tizen package")
                 .args(&tizen_env_args)
@@ -81,7 +88,16 @@ fn main() {
     let tizen_env = match app_matches.subcommand_name() {
         Some(sub_name) => match app_matches.subcommand_matches(sub_name) {
             Some(sub_matches) => {
-                match TizenEnv::from_cargo_config(&env::current_dir().unwrap(), &sub_matches) {
+                let mut manifest_dir = env::current_dir().unwrap();
+
+                while !manifest_dir.join("Cargo.toml").is_file() {
+                    if !manifest_dir.pop() {
+                        eprintln!("[ERROR] Cannot find Cargo.toml");
+                        std::process::exit(1);
+                    }
+                }
+
+                match TizenEnv::from_cargo_config(&manifest_dir, &sub_matches) {
                     Ok(obj) => obj,
                     Err(message) => {
                         eprintln!("[ERROR] {}", message);
@@ -106,6 +122,9 @@ fn main() {
         }
         Some(name @ "build") => {
             commands::build::run(&tizen_env, app_matches.subcommand_matches(&name).unwrap())
+        }
+        Some(name @ "check") => {
+            commands::check::run(&tizen_env, app_matches.subcommand_matches(&name).unwrap())
         }
         Some(name @ "package") => {
             commands::package::run(&tizen_env, app_matches.subcommand_matches(&name).unwrap())

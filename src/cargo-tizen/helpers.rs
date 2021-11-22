@@ -28,7 +28,7 @@ pub fn run_command(
 
     let working_dir = current_dir.unwrap_or(&tizen_env.base_path);
 
-    println!(
+    eprintln!(
         "Running: {} {}",
         &name.green().bold(),
         [&base_args, &forward_args[..], &last_args[..]]
